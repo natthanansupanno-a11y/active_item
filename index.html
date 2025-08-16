@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>สรุปยอด Active Item | Generic Version + Voice</title>
+<style>
+  :root{
+    --bg:#0b0f14; --card:#121821; --ink:#e7f0ff; --muted:#9fb3cc;
+    --accent:#6ea8fe; --accent2:#8ed0ff; --ok:#50d890; --warn:#ffd166;
+    --danger:#ff6b6b; --chip:#1a2330;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Prompt,TH Sarabun New,sans-serif;
+    background:linear-gradient(180deg,#0b0f14 0%, #0d1520 60%, #0b0f14 100%);
+    color:var(--ink);
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:16px 14px 120px}
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 12px;border:1px solid #1e2a3a;border-radius:12px;background:rgba(18,24,33,.7);backdrop-filter: blur(6px);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent2)}
+  h1{font-size:18px;margin:0}
+  .sub{font-size:12px;color:var(--muted)}
+  .chip{background:var(--chip);padding:6px 10px;border-radius:999px;border:1px solid #243144;font-size:12px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+  @media(min-width:820px){ .grid{grid-template-columns:repeat(3,1fr)} }
+  .card{
+    background:var(--card); border:1px solid #1f2b3c; border-radius:16px; padding:14px; position:relative; overflow:hidden;
+  }
+  .card h2{margin:0 0 10px;font-size:16px}
+  .total{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+  .total .pill{background:#0f1725;border:1px solid #233149;border-radius:10px;padding:6px 10px;font-size:12px;color:var(--muted)}
+  .row{display:flex;gap:10px;margin-top:8px}
+  .row input{
+    appearance:textfield;
+    width:100%; padding:12px 10px; border-radius:12px; border:1px solid #263246;background:#0e1622;color:var(--ink);
+  }
+  .row button{
+    white-space:nowrap; padding:12px 12px; border-radius:12px; border:1px solid #28406a;background:#13233a;color:#d8e7ff;
+    cursor:pointer; transition:.15s; font-weight:600;
+  }
+  .row button:hover{transform:translateY(-1px)}
+  .primary{background:linear-gradient(180deg,#2e6cff,#1f53d9);border-color:#2750a6}
+  .ghost{background:#0e1622;border-color:#27334a}
+  .danger{background:#2a1420;border-color:#5b2a41;color:#ffd6e3}
+  .ok{background:#0e241a;border-color:#2f6b4b;color:#c8ffe0}
+  .wide{grid-column:1 / -1}
+  .flex{display:flex;gap:10px;flex-wrap:wrap}
+  .mute{color:var(--muted);font-size:12px}
+  textarea{
+    width:100%;min-height:120px;border-radius:12px;border:1px solid #273349;background:#0e1622;color:var(--ink);padding:12px 10px
+  }
+  .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#0c1420;border:1px solid #2a3b58;border-radius:6px;padding:2px 6px;color:#cfe0ff}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .stamp{position:absolute;right:12px;top:12px;font-size:11px;color:var(--muted)}
+  .hist{max-height:240px;overflow:auto;border-radius:12px;border:1px solid #263246;background:#0c1420;padding:8px}
+  .hist-item{padding:8px;border-bottom:1px dashed #243144}
+  .hist-item:last-child{border-bottom:none}
+  .timegrid{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{padding:6px 10px;border-radius:999px;border:1px solid #2a3b58;background:#0e1622;color:#cfe0ff;font-size:12px}
+  .now{border-color:#4768ff;box-shadow:0 0 0 1px #304aac}
+  .voice{display:flex;align-items:center;gap:8px}
+  .rec-dot{width:10px;height:10px;border-radius:99px;background:#566b86}
+  .rec-dot.active{background:#ff5d8f;box-shadow:0 0 14px #ff90b3}
+  footer{
+    position:fixed;left:0;right:0;bottom:0;background:rgba(12,18,28,.9);backdrop-filter:blur(8px);
+    border-top:1px solid #1f2b3c;padding:10px 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center
+  }
+  footer button{padding:10px 12px;border-radius:12px;border:1px solid #2a3b58;background:#102036;color:#cfe0ff;cursor:pointer}
+  footer .cta{background:linear-gradient(180deg,#2e6cff,#1f53d9);border-color:#2750a6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <input id="branchInput" type="text" placeholder="กรอกชื่อสาขา..." style="font-size:16px;padding:4px 8px;border-radius:8px;border:1px solid #243144;background:#0e1622;color:var(--ink)">
+        <div class="sub">Active / แลกซื้อ / PLM (HPP) — พิมพ์หรือสั่งด้วยเสียง</div>
+      </div>
+    </div>
+    <div class="chip" id="todayChip">วันนี้</div>
+  </header>
+
+  <section class="grid">
+    <!-- Active -->
+    <div class="card">
+      <div class="stamp">หมวด: Active</div>
+      <h2>Active</h2>
+      <div class="total" id="tot-active">
+        <div class="pill">จำนวน: <b class="val">0</b> ชิ้น</div>
+        <div class="pill">ราคา: <b class="val">0</b> บาท</div>
+      </div>
+      <div class="row">
+        <input id="aQty" type="number" inputmode="numeric" placeholder="จำนวน (ชิ้น)">
+        <input id="aPrice" type="number" inputmode="numeric" placeholder="ราคา (บาท)">
+        <button class="primary" id="aAdd">บันทึก</button>
+      </div>
+    </div>
+
+    <!-- แลกซื้อ -->
+    <div class="card">
+      <div class="stamp">หมวด: แลกซื้อ</div>
+      <h2>แลกซื้อ</h2>
+      <div class="total" id="tot-ex">
+        <div class="pill">จำนวน: <b class="val">0</b> ชิ้น</div>
+        <div class="pill">ราคา: <b class="val">0</b> บาท</div>
+      </div>
+      <div class="row">
+        <input id="eQty" type="number" inputmode="numeric" placeholder="จำนวน (ชิ้น)">
+        <input id="ePrice" type="number" inputmode="numeric" placeholder="ราคา (บาท)">
+        <button class="primary" id="eAdd">บันทึก</button>
+      </div>
+    </div>
+
+    <!-- PLM -->
+    <div class="card">
+      <div class="stamp">หมวด: PLM (HPP)</div>
+      <h2>PLM (HPP)</h2>
+      <div class="total" id="tot-plm">
+        <div class="pill">จำนวน: <b class="val">0</b> ชิ้น</div>
+        <div class="pill">ราคา: <b class="val">0</b> บาท</div>
+      </div>
+      <div class="row">
+        <input id="pQty" type="number" inputmode="numeric" placeholder="จำนวน (ชิ้น)">
+        <input id="pPrice" type="number" inputmode="numeric" placeholder="ราคา (บาท)">
+        <button class="primary" id="pAdd">บันทึก</button>
+      </div>
+    </div>
+
+    <!-- Voice -->
+    <div class="card wide">
+      <h2>สั่งด้วยเสียง</h2>
+      <div class="flex voice">
+        <div class="rec-dot" id="recDot"></div>
+        <button id="voiceBtn" class="ghost">เริ่มฟังเสียง</button>
+        <div class="mute">คำสั่ง: <span class="kbd">Active/แลกซื้อ/PLM จำนวน ชิ้น ราคา บาท</span></div>
+      </div>
+      <div class="hint" id="lastSaid">ยังไม่มีคำสั่งเสียง</div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card wide">
+      <h2>สรุปล่าสุด</h2>
+      <div class="timegrid" id="timeBadges"></div>
+      <textarea id="summaryBox" readonly placeholder="สรุปจะแสดงที่นี่หลังจบรอบ..."></textarea>
+      <div class="flex" style="margin-top:8px">
+        <button id="copyBtn" class="ok">คัดลอกสรุป</button>
+        <button id="forceBtn" class="ghost">สรุปเดี๋ยวนี้ (ทดสอบ)</button>
+        <button id="resetDayBtn" class="danger">รีเซ็ตทั้งวัน (เริ่มใหม่)</button>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card wide">
+      <h2>ประวัติสรุป (เก็บไว้ทุกครั้ง)</h2>
+      <div id="history" class="hist"></div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <span class="mute">สถานะ:</span>
+  <span class="chip" id="status">พร้อมทำงาน</span>
+  <button class="cta" id="savePing">บันทึกสถานะ</button>
+</footer>
+
+<script>
+(() => {
+  const SLOTS = ["11:30","14:30","19:30"];
+  const els = {
+    branchInput: document.getElementById('branchInput'),
+    totals: {
+      active: document.querySelector('#tot-active'),
+      ex: document.querySelector('#tot-ex'),
+      plm: document.querySelector('#tot-plm')
+    },
+    inputs:{
+      aQty: document.getElementById('aQty'), aPrice: document.getElementById('aPrice'), aAdd: document.getElementById('aAdd'),
+      eQty: document.getElementById('eQty'), ePrice: document.getElementById('ePrice'), eAdd: document.getElementById('eAdd'),
+      pQty: document.getElementById('pQty'), pPrice: document.getElementById('pPrice'), pAdd: document.getElementById('pAdd')
+    },
+    voiceBtn: document.getElementById('voiceBtn'),
+    recDot: document.getElementById('recDot'),
+    lastSaid: document.getElementById('lastSaid'),
+    summaryBox: document.getElementById('summaryBox'),
+    copyBtn: document.getElementById('copyBtn'),
+    forceBtn: document.getElementById('forceBtn'),
+    resetDayBtn: document.getElementById('resetDayBtn'),
+    timeBadges: document.getElementById('timeBadges'),
+    history: document.getElementById('history'),
+    status: document.getElementById('status'),
+    savePing: document.getElementById('savePing'),
+  };
+
+  function todayKey(){ return new Date().toISOString().slice(0,10); }
+
+  function loadState(){
+    const key = todayKey();
+    let data = JSON.parse(localStorage.getItem('todayData')||'{}');
+    if(!data.date || data.date!==key){
+      data = {date:key, active:{qty:0,price:0}, ex:{qty:0,price:0}, plm:{qty:0,price:0}, summaries:{}, voiceBuffer:[]};
+      localStorage.setItem('todayData', JSON.stringify(data));
+    }
+    return data;
+  }
+  function saveState(data){ localStorage.setItem('todayData', JSON.stringify(data)); }
+
+  function pushHistory(item){
+    const hist = JSON.parse(localStorage.getItem('history')||'[]');
+    hist.unshift(item);
+    localStorage.setItem('history', JSON.stringify(hist.slice(0,200)));
+  }
+  function loadHistory(){ return JSON.parse(localStorage.getItem('history')||'[]'); }
+
+  function fmt(n){ return new Intl.NumberFormat('th-TH').format(Number(n||0)); }
+
+  function badgeRender(){
+    els.timeBadges.innerHTML = '';
+    const data = loadState();
+    SLOTS.forEach(t=>{
+      const done = data.summaries && data.summaries[t];
+      const el = document.createElement('span');
+      el.className = 'badge ' + (!done ? 'now' : '');
+      el.textContent = t + (done ? ' ✓' : '');
+      els.timeBadges.appendChild(el);
+    });
+  }
+
+  function paintTotals(){
+    const d = loadState();
+    [['active', els.totals.active],['ex', els.totals.ex],['plm', els.totals.plm]].forEach(([k,node])=>{
+      const vs = node.querySelectorAll('.val');
+      vs[0].textContent = fmt(d[k].qty);
+      vs[1].textContent = fmt(d[k].price);
+    });
+  }
+
+  function paintHistory(){
+    const hist = loadHistory();
+    els.history.innerHTML = hist.length? '' : '<div class="mute">ยังไม่มีประวัติ</div>';
+    hist.forEach(h=>{
+      const div = document.createElement('div');
+      div.className = 'hist-item';
+      div.innerHTML = `<div class="mute">${h.dateTime} • รอบ ${h.slot}</div>
+      <div style="white-space:pre-wrap">${escapeHtml(h.text)}</div>`;
+      els.history.appendChild(div);
+    });
+  }
+
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  function add(category, qty, price){
+    qty = Number(qty)||0; price = Number(price)||0;
+    if(qty<=0 && price<=0) return;
+    const d = loadState();
+    d[category].qty += qty; d[category].price += price;
+    saveState(d);
+    paintTotals();
+  }
+
+  function parseVoiceCommand(text){
+    text = text.trim();
+    const parts = text.split(/[\s,]+/);
+    if(parts.length < 3) return null;
+    const catMap = {active:'active', แลกซื้อ:'ex', plm:'plm'};
+    let cat = catMap[parts[0].toLowerCase()] || catMap[parts[0]]; 
+    if(!cat) return null;
+    let qty = Number(parts[1])||0;
+    let price = Number(parts[2])||0;
+    return {cat, qty, price};
+  }
+
+  function recordVoiceCommand(text){
+    const cmds = text.split(/;|,|\band\b/); // รองรับหลายคำสั่งต่อเนื่อง (ถ้ามี)
+    cmds.forEach(cmdText=>{
+      const cmd = parseVoiceCommand(cmdText);
+      if(cmd){
+        add(cmd.cat, cmd.qty, cmd.price);
+        const d = loadState();
+        d.voiceBuffer.push(cmd);
+        saveState(d);
+        els.lastSaid.textContent = `บันทึกคำสั่งเสียง: ${cmdText}`;
+      } else els.lastSaid.textContent = `คำสั่งไม่ถูกต้อง: ${cmdText}`;
+    });
+  }
+
+  function makeSummaryText(slot){
+    const d = loadState();
+    const branchName = els.branchInput.value || "Branch XYZ";
+    const lines = [
+      `${branchName}`,
+      `Active: จำนวน ${fmt(d.active.qty)} ชิ้น, ราคา ${fmt(d.active.price)} บาท`,
+      `แลกซื้อ: จำนวน ${fmt(d.ex.qty)} ชิ้น, ราคา ${fmt(d.ex.price)} บาท`,
+      `PLM: จำนวน ${fmt(d.plm.qty)} ชิ้น, ราคา ${fmt(d.plm.price)} บาท`
+    ];
+    return lines.join('\n');
+  }
+
+  function forceSummary(){
+    const d = loadState();
+    const nowSlot = SLOTS.find(s=>!d.summaries[s]);
+    if(!nowSlot) return alert('ครบทุกรอบแล้ววันนี้');
+    const txt = makeSummaryText(nowSlot);
+    els.summaryBox.value = txt;
+    d.summaries[nowSlot] = txt;
+    saveState(d);
+    pushHistory({dateTime:new Date().toLocaleString('th-TH'),slot:nowSlot,text:txt});
+    paintHistory();
+    ['active','ex','plm'].forEach(c=>{ d[c].qty=0; d[c].price=0; });
+    d.voiceBuffer = [];
+    saveState(d);
+    paintTotals();
+    badgeRender();
+  }
+
+  els.inputs.aAdd.onclick = ()=>{ add('active', els.inputs.aQty.value, els.inputs.aPrice.value) }
+  els.inputs.eAdd.onclick = ()=>{ add('ex', els.inputs.eQty.value, els.inputs.ePrice.value) }
+  els.inputs.pAdd.onclick = ()=>{ add('plm', els.inputs.pQty.value, els.inputs.pPrice.value) }
+  els.copyBtn.onclick = ()=>{ els.summaryBox.select(); document.execCommand('copy'); alert('คัดลอกสรุปเรียบร้อย'); }
+  els.forceBtn.onclick = forceSummary;
+  els.resetDayBtn.onclick = ()=>{ if(confirm('รีเซ็ตข้อมูลทั้งหมดวันนี้?')){ localStorage.removeItem('todayData'); paintTotals(); els.summaryBox.value=''; badgeRender(); } }
+  els.savePing.onclick = ()=>{ alert('สถานะบันทึกเรียบร้อย') }
+
+  if('webkitSpeechRecognition' in window){
+    const recog = new webkitSpeechRecognition();
+    recog.lang = 'th-TH'; recog.continuous = false; recog.interimResults = false;
+    recog.onstart = ()=>{ els.recDot.classList.add('active'); els.status.textContent='กำลังฟังเสียง...' }
+    recog.onend = ()=>{ els.recDot.classList.remove('active'); els.status.textContent='พร้อมทำงาน' }
+    recog.onresult = e=>{
+      const txt = e.results[0][0].transcript;
+      recordVoiceCommand(txt);
+    }
+    els.voiceBtn.onclick = ()=>{ recog.start(); }
+  } else {
+    els.voiceBtn.disabled = true; els.lastSaid.textContent='เบราว์เซอร์ไม่รองรับ Voice Input';
+  }
+
+  paintTotals(); paintHistory(); badgeRender();
+})();
+</script>
+</body>
+</html>
